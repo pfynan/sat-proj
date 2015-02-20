@@ -1,4 +1,5 @@
 dpll
+*.pyc
 
 # Compiled Object files
 *.slo
