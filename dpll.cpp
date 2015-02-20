@@ -35,7 +35,7 @@ Sat<Cnf> set_var(int var,const Cnf &cnf) {
     Cnf ret;
     ret.variables = cnf.variables;
     ret.used_variables = cnf.used_variables;
-    ret.used_variables.insert(abs(var));
+    ret.used_variables.insert(var);
     for(auto i = begin(cnf.clauses); i < end(cnf.clauses); ++i) {
         UnSat<Clause> c = set_var_clause(var,*i);
         if(!c)
@@ -55,20 +55,27 @@ optional<int> bcp_clause(const Clause &c) {
         return optional<int>();
 }
 
-optional<bool> is_resolved(const Sat<Cnf> &in) {
-    if(!in)
-        return optional<bool>(false);
-    else if(in->clauses.empty())
-        return optional<bool>(true);
+bool is_resolved(const Sat<Cnf> &in) {
+    if(!in || in->clauses.empty())
+        return true;
     else
-        return optional<bool>();
+        return false;
 }
 
-bool dpll(const Sat<Cnf> &in) {
-    optional<bool> resolved;
+template<class U,class V>
+Sat<Cnf> mplus(U a,V b) {
+    Sat<Cnf> x = a();
+    if(bool(x))
+        return x;
+    else
+        return b();
+}
+
+Sat<Cnf> dpll(const Sat<Cnf> &in) {
+    bool resolved;
     resolved = is_resolved(in);
     if(resolved)
-        return *resolved;
+        return in;
 
     for(auto c: in->clauses) {
         auto bvar = bcp_clause(c);
@@ -96,20 +103,22 @@ bool dpll(const Sat<Cnf> &in) {
         var = max_element(begin(counts),end(counts),[](const pair<int,size_t> &x,const pair<int,size_t> &y){return x.second < y.second;})->first;
     } else
         for(var = 1; var < in->variables; ++var)
-            if(!in->used_variables.count(var)) {
+            if(!in->used_variables.count(var) && !in->used_variables.count(-var)) {
                 break;
             }
 
 
     ++stats.splits;
-   return dpll(set_var(var,*in)) || dpll(set_var(-var,*in));
+    
+
+   return mplus([&](){return dpll(set_var(var,*in));}, [&](){return dpll(set_var(-var,*in));});
 }
 
 void print_dpll_stats() {
-    cout << "Stats:" << endl
-         << "Splits: " << stats.splits << endl
-         << "Props: " << stats.prop << endl
-         << "Branch: " << stats.smart_branch << endl;
+    cout << "c Stats:" << endl
+         << "c Splits: " << stats.splits << endl
+         << "c Props: " << stats.prop << endl
+         << "c Branch: " << stats.smart_branch << endl;
 }
 
 
