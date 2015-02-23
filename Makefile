@@ -1,7 +1,7 @@
 TARGET	:= dpll
 LIBS	:= -lm -lz
 CXX		:= c++ 
-CFLAGS  += -std=c++11 -g -Wall -Wextra -isystem ./boost_1_57_0/
+CFLAGS  += -std=c++11 -g -Wall -Wextra -isystem ./boost
 
 .PHONY: default all clean
 
